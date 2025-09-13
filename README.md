@@ -1,2 +1,1 @@
-# mlp-classification-spaceship-titanic
-Transported passengers prediction with a PyTorch Neural Network and an interactive Streamlit app.
+Repository for working on a kaggle competition where the goal is to predict which passengers where transported to another dimension.

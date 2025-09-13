@@ -1,1 +1,1 @@
-Repository for working on a kaggle competition where the goal is to predict which passengers were transported to another dimension.
+Transported passengers prediction with a PyTorch Neural Network and an interactive Streamlit app.

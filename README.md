@@ -1,1 +1,1 @@
-Repository for working on a kaggle competition where the goal is to predict which passengers where transported to another dimension.
+Repository for working on a kaggle competition where the goal is to predict which passengers were transported to another dimension.

@@ -11,7 +11,7 @@ The main goal is to practice and apply what I've been learning in **Artificial I
 * `notebooks/` — notebooks for all stages of Machine Learning.
     * `01_preprocessing.ipynb` — for data exploration and preparation.
 
-## 🛠 Technologies
+## 🛠 Technologies (expected)
 
 * Python
 * NumPy

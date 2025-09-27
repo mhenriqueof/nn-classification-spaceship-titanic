@@ -52,10 +52,14 @@ class CryoSleep(BaseEstimator, TransformerMixin):
         
         # Spent on amenities
         indexes = df.query("(RoomService > 0) | (FoodCourt > 0) | (ShoppingMall > 0) | (Spa > 0) | (VRDeck > 0)").index
-        df.loc[indexes, 'CryoSleep'] = 'False'
+        df.loc[indexes, 'CryoSleep'] = df.loc[indexes, 'CryoSleep'].fillna('False')
         
-        # Didn't spend
-        df['CryoSleep'] = df['CryoSleep'].fillna('True')
+        # Didn't spend and weren't children
+        indexes = df.query("~((RoomService > 0) | (FoodCourt > 0) | (ShoppingMall > 0) | (Spa > 0) | (VRDeck > 0)) and (Age >= 13)").index
+        df.loc[indexes, 'CryoSleep'] = df.loc[indexes, 'CryoSleep'].fillna('True')
+        
+        # Children
+        df = df.dropna(subset='CryoSleep')
         
         return df
     

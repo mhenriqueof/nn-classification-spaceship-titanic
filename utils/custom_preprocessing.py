@@ -38,8 +38,8 @@ class FeatureExtraction(BaseEstimator, TransformerMixin):
 class CryoSleep(BaseEstimator, TransformerMixin):
     """
     Imputes missing values in 'CryoSleep' based on amenity usage.
-    - Passengers who spent on at least one amenity are awake -> CryoSleep = False
-    - Remaining passengers are considered to be asleep -> CryoSleep = True
+    - Passengers who spent on at least one amenity are awake → CryoSleep = False
+    - Remaining passengers are considered to be asleep → CryoSleep = True
     """
     def __init__(self):
         pass
@@ -49,6 +49,9 @@ class CryoSleep(BaseEstimator, TransformerMixin):
 
     def transform(self, X):
         df = X.copy()
+        
+        # Convert column to boolean
+        df['CryoSleep'] = df['CryoSleep'].astype(bool)
         
         # Spent on amenities
         indexes = df.query("(RoomService > 0) | (FoodCourt > 0) | (ShoppingMall > 0) | (Spa > 0) | (VRDeck > 0)").index
@@ -60,6 +63,75 @@ class CryoSleep(BaseEstimator, TransformerMixin):
         
         # Children
         df = df.dropna(subset='CryoSleep')
+        
+        return df
+    
+## HomePlanet
+class HomePlanet(BaseEstimator, TransformerMixin):
+    """
+    Imputes missing values in 'HomePlanet' based on CabinDeck.
+    - Passengers in CabinDeck A, B, or C → HomePlanet = Europa
+    - Passengers in CabinDeck G → HomePlanet = Earth
+    - Remaining passengers with missing HomePlanet → "Unknown"
+    """
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        df = X.copy()
+        
+        # Impute with HomePlanet = Europa
+        indexes = df.query("(CabinDeck == 'A') | (CabinDeck == 'B') | (CabinDeck == 'C')").index
+        df.loc[indexes, 'HomePlanet'] = df.loc[indexes, 'HomePlanet'].fillna('Europa')
+        
+        # Impute with HomePlanet = Earth
+        indexes = df.query("CabinDeck == 'G'").index
+        df.loc[indexes, 'HomePlanet'] = df.loc[indexes, 'HomePlanet'].fillna('Earth')
+        
+        # Fill the remaining with "Unknown"
+        df['HomePlanet'] = df['HomePlanet'].fillna('Unknown')
+        
+        return df
+
+## Amenities
+class Amenities(BaseEstimator, TransformerMixin):
+    """
+    Imputes missing values in amenity columns based on CryoSleep status, Age, and HomePlanet.
+    - Passengers who are awake and Age >= 13 → median of the amenity for their HomePlanet
+    - Passengers who are asleep or Age < 13 → 0
+    - Remaining missing values → median of each amenity
+    """
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        df = X.copy()
+        
+        amenities = ['RoomService', 'FoodCourt', 'ShoppingMall', 'Spa', 'VRDeck']
+        home_planets = ['Earth', 'Europa', 'Mars'] # exclude "Unknown" because they are uncertain
+        
+        for amenity in amenities:
+            # Awake and Age >= 13 → impute with median by HomePlanet
+            for home_planet in home_planets:
+                mask = df.query(f"(HomePlanet == '{home_planet}') & (CryoSleep == False) & (Age >= 13)")
+                amenity_median = mask[amenity].median()
+                indexes = mask[amenity].isna().index
+                df.loc[indexes, amenity] = df.loc[indexes, amenity].fillna(amenity_median)
+                
+            # Asleep or Age < 13 → 0
+            indexes = df.query(f"(CryoSleep == True) | (Age < 13)")[amenity].isna().index
+            df.loc[indexes, amenity] = df.loc[indexes, amenity].fillna(0)
+        
+        # Fill the remaining with the median of each amenity
+        for amenity in amenities:
+            amenity_median = df[amenity].median()
+            df[amenity] = df[amenity].fillna(amenity_median)
         
         return df
     

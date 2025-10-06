@@ -1,4 +1,6 @@
+import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.impute import SimpleImputer
 
 # 1. Feature Extraction
 class FeatureExtraction(BaseEstimator, TransformerMixin):
@@ -35,7 +37,7 @@ class FeatureExtraction(BaseEstimator, TransformerMixin):
 
 # 2. Handle Missing Values
 ## CryoSleep
-class CryoSleep(BaseEstimator, TransformerMixin):
+class MissingCryo(BaseEstimator, TransformerMixin):
     """
     Imputes missing values in 'CryoSleep' based on amenity usage.
     - Passengers who spent on at least one amenity are awake → CryoSleep = False
@@ -67,7 +69,7 @@ class CryoSleep(BaseEstimator, TransformerMixin):
         return df
     
 ## HomePlanet
-class HomePlanet(BaseEstimator, TransformerMixin):
+class MissingHome(BaseEstimator, TransformerMixin):
     """
     Imputes missing values in 'HomePlanet' based on CabinDeck.
     - Passengers in CabinDeck A, B, or C → HomePlanet = Europa
@@ -91,13 +93,13 @@ class HomePlanet(BaseEstimator, TransformerMixin):
         indexes = df.query("CabinDeck == 'G'").index
         df.loc[indexes, 'HomePlanet'] = df.loc[indexes, 'HomePlanet'].fillna('Earth')
         
-        # Fill the remaining with "Unknown"
-        df['HomePlanet'] = df['HomePlanet'].fillna('Unknown')
+        # Impute with HomePlanet = Mars
+        df['HomePlanet'] = df['HomePlanet'].fillna('Mars')
         
         return df
 
 ## Amenities
-class Amenities(BaseEstimator, TransformerMixin):
+class MissingAmenities(BaseEstimator, TransformerMixin):
     """
     Imputes missing values in amenity columns based on CryoSleep status, Age, and HomePlanet.
     - Passengers who are awake and Age >= 13 → median of the amenity for their HomePlanet
@@ -132,6 +134,38 @@ class Amenities(BaseEstimator, TransformerMixin):
         for amenity in amenities:
             amenity_median = df[amenity].median()
             df[amenity] = df[amenity].fillna(amenity_median)
+        
+        return df
+    
+## Remaining
+class MissingRemaining(BaseEstimator, TransformerMixin):
+    """
+    Imputes missing values in the remaining columns.
+    - 'CabinNum' and 'LastName' → "Unknown"
+    - Others → median or mode
+    """
+    def __init__(self):
+        pass
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        df = X.copy()
+        
+        # 'CabinNum' and 'LastName'
+        df['CabinNum'] = df['CabinNum'].fillna('Unknown')
+        df['LastName'] = df['LastName'].fillna('Unknown')
+        
+        # Others
+        num_columns = df.select_dtypes(include=np.number).columns
+        cat_columns = df.select_dtypes(exclude=np.number).columns
+        
+        num_imputer = SimpleImputer(strategy='median')
+        cat_imputer = SimpleImputer(strategy='most_frequent')
+        
+        df[num_columns] = num_imputer.fit_transform(df[num_columns])
+        df[cat_columns] = cat_imputer.fit_transform(df[cat_columns])
         
         return df
     

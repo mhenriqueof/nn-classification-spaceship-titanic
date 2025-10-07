@@ -52,9 +52,6 @@ class MissingCryo(BaseEstimator, TransformerMixin):
     def transform(self, X):
         df = X.copy()
         
-        # Convert column to boolean
-        df['CryoSleep'] = df['CryoSleep'].astype(bool)
-        
         # Spent on amenities
         indexes = df.query("(RoomService > 0) | (FoodCourt > 0) | (ShoppingMall > 0) | (Spa > 0) | (VRDeck > 0)").index
         df.loc[indexes, 'CryoSleep'] = df.loc[indexes, 'CryoSleep'].fillna('False')
@@ -66,13 +63,16 @@ class MissingCryo(BaseEstimator, TransformerMixin):
         # Children
         df = df.dropna(subset='CryoSleep')
         
+        # Convert column type to boolean
+        df['CryoSleep'] = df['CryoSleep'].astype(bool)
+        
         return df
     
 ## HomePlanet
 class MissingHome(BaseEstimator, TransformerMixin):
     """
     Imputes missing values in 'HomePlanet' based on CabinDeck.
-    - Passengers in CabinDeck A, B, or C → HomePlanet = Europa
+    - Passengers in CabinDeck A, B, C or T → HomePlanet = Europa
     - Passengers in CabinDeck G → HomePlanet = Earth
     - Remaining passengers with missing HomePlanet → "Unknown"
     """
@@ -86,7 +86,7 @@ class MissingHome(BaseEstimator, TransformerMixin):
         df = X.copy()
         
         # Impute with HomePlanet = Europa
-        indexes = df.query("(CabinDeck == 'A') | (CabinDeck == 'B') | (CabinDeck == 'C')").index
+        indexes = df.query("(CabinDeck == 'A') | (CabinDeck == 'B') | (CabinDeck == 'C') | (CabinDeck == 'T')").index
         df.loc[indexes, 'HomePlanet'] = df.loc[indexes, 'HomePlanet'].fillna('Europa')
         
         # Impute with HomePlanet = Earth
@@ -137,7 +137,7 @@ class MissingAmenities(BaseEstimator, TransformerMixin):
         
         return df
     
-## Remaining
+## Remaining columns
 class MissingRemaining(BaseEstimator, TransformerMixin):
     """
     Imputes missing values in the remaining columns.

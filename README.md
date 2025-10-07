@@ -11,7 +11,7 @@ The objective of the project is to practice and apply what I've been learning in
 * `notebooks/` — notebooks for all stages of Machine Learning
     * `01_preprocessing.ipynb` — data exploration and preparation
 * `utils/` — modules for the project
-    * `custom_preprocessing.py` — classes for the preprocessing pipeline
+    * `custom_preprocessing.py` — classes for preprocessing pipeline
 ## 🛠 Technologies (expected)
 
 * Python
